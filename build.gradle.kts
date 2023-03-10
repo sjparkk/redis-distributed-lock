@@ -21,6 +21,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    // https://mvnrepository.com/artifact/org.redisson/redisson-spring-boot-starter
+    implementation("org.redisson:redisson-spring-boot-starter:3.19.3")
+
 }
 
 tasks.withType<KotlinCompile> {
