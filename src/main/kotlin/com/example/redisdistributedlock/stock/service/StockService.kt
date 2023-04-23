@@ -20,6 +20,32 @@ class StockService(
 
     val log: Logger = LoggerFactory.getLogger(this::class.java)
 
+    /**
+     * Lock 을 이용한 재고 감소
+     */
+    fun decrease(key: String, count: Int) {
+        val lockName = "$key:lock"
+        val lock = redissonClient.getLock(lockName)
+        val worker = Thread.currentThread().name
+
+        try {
+            if (!lock.tryLock(1, 3, TimeUnit.SECONDS)) return
+            val stock = currentStock(key)
+            if (stock <= EMPTY_NUMBER) {
+                log.info("[$worker] 현재 남은 재고가 없습니다. (${stock}개)")
+                return
+            }
+            log.info("현재 진행중 Worker : $worker & 현재 남은 재고 : ${stock}개")
+            setStock(key, stock - count)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        } finally {
+            if (lock != null && lock.isLocked) {
+                lock.unlock()
+            }
+        }
+    }
+
     fun keyGenerator(domain: String, keyId: String?): String {
         val prefix = "${stockProperties.prefix} : $domain: %s"
         return String.format(prefix, keyId)
@@ -31,7 +57,7 @@ class StockService(
 
     fun currentStock(key: String?): Int {
         val result = redissonClient.getBucket<Int>(key).get()
-        log.info("햔재 재고 수량 $result")
+        log.info("현재 재고 수량 $result")
         return result
     }
 
