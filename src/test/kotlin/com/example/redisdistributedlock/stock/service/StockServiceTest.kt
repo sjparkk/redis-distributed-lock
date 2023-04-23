@@ -5,15 +5,9 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestConstructor
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
-import java.util.function.Supplier
-import java.util.stream.Collectors
-import java.util.stream.Stream
 
 
 @SpringBootTest
@@ -56,6 +50,48 @@ class StockServiceTest(
         val currentCount = stockService.currentStock(stockKey)
         if (amount != null) {
             assertEquals(amount - count, currentCount)
+        }
+    }
+
+    @Test
+    @DisplayName("락 있는 경우 재고 감소 테스트")
+    @Throws(InterruptedException::class)
+    fun decreaseStockByLock() {
+
+        log.info(":: 락 있는 경우 재고 감소 테스트")
+
+        val people = 100
+        val count = 2
+        val soldOut = 0
+
+        val workers = mutableListOf<Thread>()
+        val countDownLatch = CountDownLatch(people)
+
+        for(i in 1..people) {
+            val thread = Thread(Worker(stockKey, count, countDownLatch))
+            log.info("$i 번 쓰레드 생성 - ${thread.name}")
+            workers.add(thread)
+        }
+
+        workers.forEach {
+            log.info("$it 쓰레드 start() ")
+            it.start()
+        }
+
+        countDownLatch.await()
+
+        val currentCount = stockService.currentStock(stockKey)
+        assertEquals(soldOut, currentCount)
+    }
+
+    private inner class Worker(
+        private val stockKey: String,
+        private val count: Int,
+        private val countDownLatch: CountDownLatch
+    ): Runnable {
+        override fun run() {
+            stockService.decrease(this.stockKey, count)
+            countDownLatch.countDown()
         }
     }
 
