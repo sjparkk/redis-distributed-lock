@@ -84,6 +84,35 @@ class StockServiceTest(
         assertEquals(soldOut, currentCount)
     }
 
+    @Test
+    @DisplayName("락 없는 경우 재고 감소 테스트")
+    @Throws(InterruptedException::class)
+    fun decreaseStockByNoLock() {
+        log.info(":: 락 없는 경우 재고 감소 테스트")
+
+        val people = 100
+        val count = 2
+        val soldOut = 0
+
+        val workers = mutableListOf<Thread>()
+        val countDownLatch = CountDownLatch(people)
+
+        for(i in 1..people) {
+            val thread = Thread(NoLockWorker(stockKey, count, countDownLatch))
+            log.info("$i 번 쓰레드 생성 - ${thread.name}")
+            workers.add(thread)
+        }
+
+        workers.forEach {
+            log.info("$it 쓰레드 start() ")
+            it.start()
+        }
+
+        countDownLatch.await()
+        val currentCount = stockService.currentStock(stockKey)
+        assertNotEquals(soldOut, currentCount)
+    }
+
     private inner class Worker(
         private val stockKey: String,
         private val count: Int,
@@ -91,6 +120,17 @@ class StockServiceTest(
     ): Runnable {
         override fun run() {
             stockService.decrease(this.stockKey, count)
+            countDownLatch.countDown()
+        }
+    }
+
+    private inner class NoLockWorker(
+        private val stockKey: String,
+        private val count: Int,
+        private val countDownLatch: CountDownLatch
+    ): Runnable {
+        override fun run() {
+            stockService.decreaseNoLock(this.stockKey, count)
             countDownLatch.countDown()
         }
     }
