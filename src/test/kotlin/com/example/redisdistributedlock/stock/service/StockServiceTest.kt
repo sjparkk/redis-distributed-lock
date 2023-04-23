@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch
 
 @SpringBootTest
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class StockServiceTest(
     private var stockService: StockService
 ) {
@@ -34,6 +35,7 @@ class StockServiceTest(
     }
 
     @Test
+    @Order(1)
     @DisplayName("현재 재고 수량 확인")
     fun currentStock() {
         val amount: Int? = stock.amount
@@ -42,6 +44,7 @@ class StockServiceTest(
     }
 
     @Test
+    @Order(2)
     @DisplayName("상품 재고 카운트만큼 감소")
     fun decreaseStockByCount() {
         val amount: Int? = stock.amount
@@ -54,6 +57,7 @@ class StockServiceTest(
     }
 
     @Test
+    @Order(3)
     @DisplayName("락 있는 경우 재고 감소 테스트")
     @Throws(InterruptedException::class)
     fun decreaseStockByLock() {
@@ -85,6 +89,7 @@ class StockServiceTest(
     }
 
     @Test
+    @Order(4)
     @DisplayName("락 없는 경우 재고 감소 테스트")
     @Throws(InterruptedException::class)
     fun decreaseStockByNoLock() {
