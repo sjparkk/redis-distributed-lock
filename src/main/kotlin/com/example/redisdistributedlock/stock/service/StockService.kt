@@ -29,4 +29,10 @@ class StockService(
         redissonClient.getBucket<Int>(key).set(amount)
     }
 
+    fun currentStock(key: String?): Int {
+        val result = redissonClient.getBucket<Int>(key).get()
+        log.info("햔재 재고 수량 $result")
+        return result
+    }
+
 }
