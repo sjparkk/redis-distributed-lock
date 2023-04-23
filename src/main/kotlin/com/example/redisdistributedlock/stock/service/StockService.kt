@@ -46,6 +46,18 @@ class StockService(
         }
     }
 
+    fun decreaseNoLock(key: String?, count: Int) {
+        val worker = Thread.currentThread().name
+        val stock = currentStock(key)
+
+        if (stock <= EMPTY_NUMBER) {
+            log.info("[$worker] 현재 남은 재고가 없습니다. (${stock}개)")
+            return
+        }
+        log.info("현재 진행중 Worker : $worker & 현재 남은 재고 : ${stock}개")
+        setStock(key, stock - count)
+    }
+
     fun keyGenerator(domain: String, keyId: String?): String {
         val prefix = "${stockProperties.prefix} : $domain: %s"
         return String.format(prefix, keyId)
