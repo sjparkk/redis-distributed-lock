@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 
 @Service
 class StockService(
+    val redissonClient: RedissonClient,
     val stockProperties: StockProperties
 ) {
 
@@ -23,4 +24,9 @@ class StockService(
         val prefix = "${stockProperties.prefix} : $domain: %s"
         return String.format(prefix, keyId)
     }
+
+    fun setStock(key: String?, amount: Int) {
+        redissonClient.getBucket<Int>(key).set(amount)
+    }
+
 }
